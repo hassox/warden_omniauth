@@ -59,11 +59,11 @@ Whatever you return from the block is the user that's made available in warden.
 
 <pre><code>
 use WardenOmniAuth do |config|
-  Warden::Strategies[:omni\_twitter] do |user|
+  Warden::Strategies[:omni\_twitter].on_callback do |user|
     # do stuff to get a user and return it from the block
   end
 
-  Warden::Strategies[:omni\_facebook] do |user|
+  Warden::Strategies[:omni\_facebook].on_callback do |user|
     # do stuff to get a user for a facebook user
   end
 end
