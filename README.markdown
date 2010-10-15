@@ -90,4 +90,4 @@ Example:
 
 You can see from this small snippet, that you don't really need this library, just define your callbacks to set the user and you're done.
 
-Rack is a beutiful thing!
+Rack is a beautiful thing!
