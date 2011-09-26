@@ -4,7 +4,7 @@ OmniAuth is a pretty aweome library.  If you haven't checked it out yet, you rea
 
 With it, you can make use of any of the [OmniAuth](http://github.com/intridea/omniauth) authentication library.  This provides some great external authentication mechanisms.
 
-Warden provides a consistent interface for projects, engines, and arbitrary rack applicaitons.  The benefit of warden, is that you do no need to know what the host application considers authentication to use it.  It also provides a way to store the user in the session etc.
+Warden provides a consistent interface for projects, engines, and arbitrary rack applicaitons.  The benefit of warden, is that you do not need to know what the host application considers authentication to use it.  It also provides a way to store the user in the session etc.
 
 By using WardenOmniAuth, you can make use of any of the OmniAuth authentication mechanisms in your host application, and any rack middleware or applications can just continue using warden without change.
 
