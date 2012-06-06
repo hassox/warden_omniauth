@@ -137,7 +137,7 @@ context do
         assert { $captures.first == {:google_oauth2 => "user"} }
       ensure
         Warden::Strategies[:omni_facebook].on_callback &WardenOmniAuth::DEFAULT_CALLBACK
-        Warden::Strategies[:omni_twitter ].on_callback &WardenOmniAuth::DEFAULT_CALLBACK
+        Warden::Strategies[:omni_twitter].on_callback &WardenOmniAuth::DEFAULT_CALLBACK
         Warden::Strategies[:omni_google_oauth2].on_callback &WardenOmniAuth::DEFAULT_CALLBACK
       end
     end
