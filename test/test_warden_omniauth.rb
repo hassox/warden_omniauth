@@ -1,4 +1,6 @@
 require 'test/test_helper'
+require 'omniauth-twitter'
+require 'omniauth-facebook'
 
 # WardenOmniauth
 context do
