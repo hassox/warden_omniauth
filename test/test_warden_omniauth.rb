@@ -87,14 +87,14 @@ context do
       session[WardenOmniAuth::SCOPE_KEY] = "user"
       expected_redirect = $omni_auth.redirect_after_callback_path
 
-      response = get("/auth/twitter/callback", {}, {'rack.session' => session, 'rack.auth' => {'user_info' => "fred"}})
+      response = get("/auth/twitter/callback", {}, {'rack.session' => session, 'rack.auth' => {'info' => "fred"}})
 
       assert("should be redirected") { response.status == 302 }
       assert("should go to the redirect path"){ response.headers['Location'] == expected_redirect }
 
       response = get(expected_redirect, {}, {'rack.session' => session })
       assert("should have made it into the app") { $captures.size == 1 }
-      assert("should have captured the user"){ $captures.first[:user_info] == 'fred' }
+      assert("should have captured the user"){ $captures.first[:info] == 'fred' }
     end
 
     # should give me different handlers for different callbacks
@@ -111,7 +111,7 @@ context do
           {:twitter => "user"}
         end
 
-        response = get("/auth/facebook/callback", {}, {'rack.session' => session, 'rack.auth' => {'user_info' => "fred"}})
+        response = get("/auth/facebook/callback", {}, {'rack.session' => session, 'rack.auth' => {'info' => "fred"}})
         response = get expected_redirect, {}, {'rack.session' => session}
         assert { $captures.size == 1 }
         assert { $captures.first == {:facebook => "user"} }
@@ -119,7 +119,7 @@ context do
 
         session = {}
         session[WardenOmniAuth::SCOPE_KEY] = "user"
-        response = get("/auth/twitter/callback", {}, {'rack.session' => session, 'rack.auth' => {'user_info' => 'fred'}})
+        response = get("/auth/twitter/callback", {}, {'rack.session' => session, 'rack.auth' => {'info' => 'fred'}})
         response = get expected_redirect, {}, {'rack.session' => session}
         assert { $captures.size == 1 }
         assert { $captures.first == {:twitter => "user"} }
