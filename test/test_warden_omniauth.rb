@@ -1,6 +1,7 @@
 require 'test/test_helper'
 require 'omniauth-twitter'
 require 'omniauth-facebook'
+require 'omniauth-google-oauth2'
 
 # WardenOmniauth
 context do
@@ -110,6 +111,9 @@ context do
         Warden::Strategies[:omni_twitter].on_callback do |user|
           {:twitter => "user"}
         end
+        Warden::Strategies[:omni_google_oauth2].on_callback do |user|
+          {:google_oauth2 => "user"}
+        end
 
         response = get("/auth/facebook/callback", {}, {'rack.session' => session, 'rack.auth' => {'info' => "fred"}})
         response = get expected_redirect, {}, {'rack.session' => session}
@@ -123,9 +127,18 @@ context do
         response = get expected_redirect, {}, {'rack.session' => session}
         assert { $captures.size == 1 }
         assert { $captures.first == {:twitter => "user"} }
+        $captures = []
+
+        session = {}
+        session[WardenOmniAuth::SCOPE_KEY] = "user"
+        response = get("/auth/google_oauth2/callback", {}, {'rack.session' => session, 'rack.auth' => {'info' => 'fred'}})
+        response = get expected_redirect, {}, {'rack.session' => session}
+        assert { $captures.size == 1 }
+        assert { $captures.first == {:google_oauth2 => "user"} }
       ensure
         Warden::Strategies[:omni_facebook].on_callback &WardenOmniAuth::DEFAULT_CALLBACK
         Warden::Strategies[:omni_twitter ].on_callback &WardenOmniAuth::DEFAULT_CALLBACK
+        Warden::Strategies[:omni_google_oauth2].on_callback &WardenOmniAuth::DEFAULT_CALLBACK
       end
     end
 
