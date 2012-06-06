@@ -4,7 +4,7 @@ require 'omniauth'
 class WardenOmniAuth
   DEFAULT_CALLBACK = lambda do |user|
     u = {}
-    u[:user_info] = user['user_info']
+    u[:info] = user['info']
     u[:uid] = user['uid']
     u[:credentials] = user['credentials']
     u[:provider] = user['provider']
