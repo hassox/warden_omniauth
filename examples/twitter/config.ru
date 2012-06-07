@@ -1,6 +1,7 @@
 $:.unshift File.join(File.dirname(__FILE__), "..", "..", "lib")
 
 require 'warden_omniauth'
+require 'omniauth-twitter'
 
 Warden::Manager.serialize_into_session do |user|
   user
