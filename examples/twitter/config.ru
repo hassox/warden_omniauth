@@ -23,7 +23,7 @@ app = lambda do |e|
   end
 end
 
-failure = lambda{|e| Rack::Resposne.new("Can't login", 401).finish }
+failure = lambda{|e| Rack::Response.new("Can't login", 401).finish }
 
 use Rack::Session::Cookie
 
