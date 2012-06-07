@@ -1,6 +1,7 @@
 $:.unshift File.join(File.dirname(__FILE__), "..", "..", "lib")
 
 require 'warden_omniauth'
+require 'omniauth-twitter'
 
 Warden::Manager.serialize_into_session do |user|
   user
@@ -23,7 +24,7 @@ app = lambda do |e|
   end
 end
 
-failure = lambda{|e| Rack::Resposne.new("Can't login", 401).finish }
+failure = lambda{|e| Rack::Response.new("Can't login", 401).finish }
 
 use Rack::Session::Cookie
 
