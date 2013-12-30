@@ -2,7 +2,7 @@ require 'warden'
 require 'omniauth'
 
 class WardenOmniAuth
-  DEFAULT_CALLBACK = lambda do |user|
+  DEFAULT_CALLBACK = lambda do |user, strategy|
     u = {}
     u[:info] = user['info']
     u[:uid] = user['uid']
@@ -30,7 +30,7 @@ class WardenOmniAuth
   # @example
   #   WardenOmniAuth.setup_strategies(:twitter, :facebook)
   def self.setup_strategies(*names)
-    names.map do |name|
+    names.each do |name|
       full_name = :"omni_#{name}"
       unless Warden::Strategies[full_name]
         klass = Class.new(WardenOmniAuth::Strategy)
@@ -44,20 +44,15 @@ class WardenOmniAuth
   # The base omniauth warden strategy.  This is inherited for each
   # omniauth strategy
   class Strategy < Warden::Strategies::Base
-    # make a specific callback for this strategy
-    def self.on_callback(&blk)
-      @on_callback = blk if blk
-      @on_callback || WardenOmniAuth.on_callback
-    end
+    class << self
+      # The name of the OmniAuth strategy to map to
+      attr_accessor :omni_name
 
-    # The name of the OmniAuth strategy to map to
-    def self.omni_name=(name)
-      @omni_name = name
-    end
-
-    # The name of the OmniAuth strategy to map to
-    def self.omni_name
-      @omni_name
+      # make a specific callback for this strategy
+      def on_callback(&blk)
+        @on_callback = blk if blk
+        @on_callback || WardenOmniAuth.on_callback
+      end
     end
 
     def authenticate!
@@ -66,51 +61,38 @@ class WardenOmniAuth
 
       # set the user if one exists
       # otherwise, redirect for authentication
-      if user = (env['omniauth.auth'] || env['rack.auth'] || request['auth']) # TODO: Fix..  Completely insecure... do not use this will look in params for the auth.  Apparently fixed in the new gem
-
-        success! self.class.on_callback[user]
+      if user = env['omniauth.auth']
+        success! self.class.on_callback[user, self.class.omni_name]
       else
         path_prefix = OmniAuth::Configuration.instance.path_prefix
-        redirect! File.join(path_prefix, self.class.omni_name)
+        # Pass in the request URI as the 'origin' param, so that
+        # OmniAuth later provides it under env['omniauth.origin']
+        redirect! File.join(path_prefix, self.class.omni_name), { 'origin' => env['REQUEST_URI'] }
       end
     end
-  end
-
-  # Pulled from extlib
-  # Convert to snake case.
-  #
-  #   "FooBar".snake_case           #=> "foo_bar"
-  #   "HeadlineCNNNews".snake_case  #=> "headline_cnn_news"
-  #   "CNN".snake_case              #=> "cnn"
-  #
-  # @return [String] Receiver converted to snake case.
-  #
-  # @api public
-  def self.snake_case(string)
-    return string.downcase if string.match(/\A[A-Z]+\z/)
-    string.gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2').
-    gsub(/([a-z])([A-Z])/, '\1_\2').
-    downcase
   end
 
   def initialize(app)
     # setup the warden strategies to wrap the omniauth ones
     names = OmniAuth::Strategies.constants.map do |konstant|
-      name = WardenOmniAuth.snake_case(konstant.to_s)
+      # Create a fake instance of the OmniAuth strategy to be able
+      # to use the #name method instead of guessing based on the
+      # class name.
+      s = OmniAuth::Strategies.const_get(konstant).new(nil)
+      s.name
     end
     WardenOmniAuth.setup_strategies(*names)
     yield self if block_given?
     @app = app
   end
 
-  # redirect after a callback
   def redirect_after_callback=(path)
-    @redirect_after_callback_path = path
+    @redirect_after_callback = lambda { |env| path }
   end
 
-
-  def redirect_after_callback_path
-    @redirect_after_callback_path ||= "/"
+  # redirect after a callback
+  def redirect_after_callback(&block)
+    @redirect_after_callback = block
   end
 
   def call(env)
@@ -132,7 +114,7 @@ class WardenOmniAuth
           args << {:scope => scope.to_sym} if scope
           response = Rack::Response.new
           if env['warden'].authenticate? *args
-            response.redirect(redirect_after_callback_path)
+            response.redirect(@redirect_after_callback.call(env).to_s)
             response.finish
           else
             auth_path = request.path.gsub(/\/callback$/, "")
@@ -143,6 +125,10 @@ class WardenOmniAuth
           Rack::Response.new("Bad Session", 400).finish
         end
       end
+    elsif request.path =~ /^#{prefix}\/failure$/i
+      # query params: message, strategy, origin
+      env['warden'].errors.add(:login, request.params['message'])
+      throw :warden
     else
       @app.call(env)
     end

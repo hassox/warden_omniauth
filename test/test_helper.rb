@@ -15,14 +15,20 @@ Warden::Manager.serialize_from_session do |user|
   user
 end
 
-
 module MyHelpers
   def app
     @app || create_app{|e| Rack::Response.new("OK").finish }
   end
 
   def create_app(&blk)
-    failure = lambda{|e| Rack::Response.new("Can't login", 401).finish }
+    failure = lambda do |env|
+      errors = env['warden'].errors.full_messages
+      if errors.count > 0
+        Rack::Response.new("Can't login: #{errors.join(',')}", 401).finish
+      else
+        Rack::Response.new("Can't login", 401).finish
+      end
+    end
     builder = Rack::Builder.new do
       use Warden::Manager do |config|
         config.failure_app = failure
@@ -33,7 +39,8 @@ module MyHelpers
 
       use WardenOmniAuth do |config|
         $omni_auth = config
-        config.redirect_after_callback = "/redirect/path"
+        $expected_redirect = "/redirect/path"
+        config.redirect_after_callback = $expected_redirect
       end
       run blk
     end.to_app
