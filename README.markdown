@@ -11,31 +11,48 @@ By using WardenOmniAuth, you can make use of any of the OmniAuth authentication 
 This is also usable in the [Devise](http://github.com/plataformatec/devise) Rails Engine
 ## Usage (Rack)
 
-<pre><code>use OmniAuth::Builer do
+```ruby
+use OmniAuth::Builer do
   # setup omniauth
 end
 
+OmniAuth.config.on_failure = Proc.new do |env|
+  OmniAuth::FailureEndpoint.new(env).redirect_to_failure
+end
+
 use Warden::Manager do |config|
-  # setup warden configuration
+  # setup warden configuration, e.g.:
+  config.failure_app = lambda do |env|
+    # This is also the failure app for any OmniAuth failures
+    Rack::Response.new({:errors => env['warden'].errors.full_messages}.to_json, 401).finish
+  end
+e
 end
 
 use WardenOmniAuth do |config|
-  config.redirect\_after\_callback = "/redirect/path" # default "/"
+  config.redirect_after_callback { |env| env['omniauth.origin'] || "/redirect/path" }
+  # or: config.redirect_after_callback = "/redirect/path"
+end
+
+WardenOmniAuth.on_callback do |omni_user, strategy|
+  # return a user object, e.g.:
+  User.authenticate!(strategy, omni_user['uid'])
 end
 
 run MyApp
-</code></pre>
+```
 
 ## Usage (Devise)
 
-<pre><code># config/initializer.rb
+```ruby
+# config/initializer.rb
 Devise.setup do |config|
 config.warden do |manager|
-  [:omni\_twitter, :omni\_facebook, :omni\_github].each do |strategy|
-    manager.default\_strategies(:scope => :user).unshift strategy
+  [:omni_twitter, :omni_facebook, :omni_github].each do |strategy|
+    manager.default_strategies(:scope => :user).unshift strategy
   end
 end
-</code></pre>
+```
 
 This will add the stratgeies to the normal devise user login for github, then facebook, then twitter.
 
@@ -47,27 +64,28 @@ By default, it grabs just _user\\info_, _uid_, _credentials_, _provider_ as a ha
 
 If you want to customise this you can do:
 
-<pre><code>
-  WardenOmniAuth.on\_callback do |user|
-    # all callbacks will go here by default
+```ruby
+  WardenOmniAuth.on_callback do |user,strategy|
+    # all callbacks will go here by default;
+    # strategy is something like 'twitter', 'facebook', etc
   end
-</code></pre>
+```
 
 Whatever you return from the block is the user that's made available in warden.
 
 ## Dealing with each kind of callback
 
-<pre><code>
+```ruby
 use WardenOmniAuth do |config|
-  Warden::Strategies[:omni\_twitter].on_callback do |user|
+  Warden::Strategies[:omni_twitter].on_callback do |user,strategy|
     # do stuff to get a user and return it from the block
   end
 
-  Warden::Strategies[:omni\_facebook].on_callback do |user|
+  Warden::Strategies[:omni_facebook].on_callback do |user,strategy|
     # do stuff to get a user for a facebook user
   end
 end
-</code></pre>
+```
 
 This will use a specific callback to get the user, or fallback if nothing specific has been defined.
 
