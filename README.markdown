@@ -1,6 +1,6 @@
 # Warden OmniAuth
 
-OmniAuth is a pretty aweome library.  If you haven't checked it out yet, you really should. This is a simple wrapper for OmniAuth so that it can be used from a warden project.  It sorts storing the user into the sesion, redirection on callbacks etc.
+OmniAuth is a pretty awesome library.  If you haven't checked it out yet, you really should. This is a simple wrapper for OmniAuth so that it can be used from a warden project.  It sorts storing the user into the sesion, redirection on callbacks etc.
 
 With it, you can make use of any of the [OmniAuth](http://github.com/intridea/omniauth) authentication library.  This provides some great external authentication mechanisms.
 
@@ -11,7 +11,7 @@ By using WardenOmniAuth, you can make use of any of the OmniAuth authentication 
 This is also usable in the [Devise](http://github.com/plataformatec/devise) Rails Engine
 ## Usage (Rack)
 
-<pre><code>use OmniAuth::Builer do
+<pre><code>use OmniAuth::Builder do
   # setup omniauth
 end
 
